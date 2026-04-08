@@ -1,13 +1,34 @@
-<script setup lang="ts">
- 
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <main class="page">
+    <el-card class="card">
+      <template #header>
+        <span>Element Plus 已接入</span>
+      </template>
+      <div class="content">
+        <el-button type="primary">Primary Button</el-button>
+        <el-button>Default Button</el-button>
+      </div>
+    </el-card>
+  </main>
 </template>
 
-<style scoped></style>
+<style scoped>
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f5f7fa;
+}
+
+.card {
+  width: min(100%, 480px);
+}
+
+.content {
+  display: flex;
+  gap: 12px;
+}
+</style>
