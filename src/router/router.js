@@ -48,7 +48,30 @@ const backroutes = [
           icon: 'User'
         }
       }]
+  },
+  {
+    path: '/auth',
+    component: () => import('../components/AuthLayout.vue'),
+    children: [
+      {
+        path: 'login',
+        //name: 'Login',
+        component: () => import('../views/Login.vue'),
+        mata: {
+          title: '登录',
+        }
+      },
+      {
+        path: 'register',
+        //name: 'Register',
+        component: () => import('../views/Register.vue'),
+        mata: {
+          title: '注册',
+        }
+      }
+    ]
   }
+
 
 ]
 

@@ -17,6 +17,7 @@ const props = defineProps({
 </script>
 <style lang="scss">
 .page-head {
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
