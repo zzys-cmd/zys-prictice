@@ -11,10 +11,10 @@ const request = axios.create({
 
 request.interceptors.request.use(
   (config) => {
-    // 在发送请求之前做些什么 
+    // 在发送请求之前做些什么
     const token = localStorage.getItem("token");
     if (token && !config.url?.includes('/user/login') && !config.url?.includes('/api/user/login')) {
-      config.headers['token'] = `Bearer ${token}`;
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -27,28 +27,20 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   (response) => {
     const { code, data, message } = response.data;
-    // 对响应数据做点什么
     if (code == 200) {
-      console.log("请求成功");
       return data;
-    } else {
-      if (code === -1) {
-        if (!response.config.url?.includes("/user/login") && !response.config.url?.includes("/api/user/login")) {
-          ElMessage.error("登录状态已过期，请重新登录");
-
-          localStorage.removeItem("token");
-          localStorage.removeItem("userInfo");
-          router.push("/login");
-        }
-      } else {
-        ElMessage.error(message || "请求失败");
-        return Promise.reject('请求失败');
-      }
     }
-
+    const isLoginPage = response.config.url?.includes('/user/login') || response.config.url?.includes('/api/user/login');
+    const msg = message || '请求失败';
+    if (!isLoginPage && (msg.includes('登录') || msg.includes('token') || msg.includes('Token') || msg.includes('认证'))) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("userInfo");
+      router.push("/auth/login");
+    }
+    ElMessage.error(msg);
+    return Promise.reject(msg);
   },
   (error) => {
-    // 对响应错误做点什么
     return Promise.reject(error);
   }
 );

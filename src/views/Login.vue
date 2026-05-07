@@ -32,6 +32,7 @@
 
 <script setup lang="js">
 import { Back } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 import { ref } from 'vue'
 import { getAdminList } from '../api/admin'
 import { useRouter } from 'vue-router'
@@ -46,20 +47,20 @@ const submitForm = async (formEL) => {
     await formEL.validate()
     const res = await getAdminList(formData.value)
     if (!res?.token) {
-      console.error('登录失败: 无效的 token')
+      ElMessage.error('登录失败: 返回数据缺少 token')
       return
     }
     localStorage.setItem('token', res.token)
     localStorage.setItem('userInfo', JSON.stringify(res.userInfo))
-    console.log('登录成功')
+    ElMessage.success('登录成功')
     if (res.userInfo.userType === 2) {
       router.push('/back/dashboard')
+    } else {
+      router.push('/')
     }
   } catch (error) {
-    console.error('登录失败', error)
+    ElMessage.error(typeof error === 'string' ? error : '登录失败，请检查用户名和密码')
   }
-
-
 
 
 }
