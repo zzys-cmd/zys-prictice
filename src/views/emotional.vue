@@ -6,20 +6,12 @@
       <el-row :gutter="24">
         <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
           <el-form-item label="用户ID" prop="userId">
-            <el-input
-              v-model="formData.userId"
-              placeholder="请输入用户ID"
-              clearable
-            />
+            <el-input v-model="formData.userId" placeholder="请输入用户ID" clearable />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
           <el-form-item label="情绪评分" prop="scoreRange">
-            <el-select
-              v-model="formData.scoreRange"
-              placeholder="选择评分范围"
-              clearable
-            >
+            <el-select v-model="formData.scoreRange" placeholder="选择评分范围" clearable>
               <el-option label="全部" value="" />
               <el-option label="低分（1-3）" value="low" />
               <el-option label="中分（4-6）" value="mid" />
@@ -69,15 +61,9 @@
     </el-table>
 
     <div style="display: flex; justify-content: flex-end; margin-top: 20px">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-        :total="total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next"
-        @current-change="onPageChange"
-        @size-change="onSizeChange"
-      />
+      <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+        :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next" @current-change="onPageChange"
+        @size-change="onSizeChange" />
     </div>
   </div>
 </template>
