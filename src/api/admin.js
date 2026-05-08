@@ -37,3 +37,11 @@ export function deleteArticle(id) {
 export function getConsultationList(params) {
   return request.get("/psychological-chat/sessions", { params });
 }
+
+export function getSessionMessages(sessionId) {
+  return request.get(`/psychological-chat/sessions/${sessionId}/messages`);
+}
+
+export function getEmotionDiaryPage(params) {
+  return request.get("/emotion-diary/admin/page", { params });
+}
