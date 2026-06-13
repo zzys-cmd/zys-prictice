@@ -1,7 +1,7 @@
 <template>
   <div class="knowledge-container">
-    <!-- ========== 头部 ========== -->
-    <div class="header-section">
+    <!-- ========== 头部（仅列表页显示） ========== -->
+    <div v-if="viewMode === 'list'" class="header-section">
       <div class="header-content">
         <div class="header-icon">📖</div>
         <div>
@@ -77,64 +77,40 @@
     <!-- ========== 详情视图 ========== -->
     <template v-else>
       <div class="detail-body">
-        <!-- 左侧：文章正文 -->
-        <div class="detail-main">
-          <!-- 分类标签 + 日期 -->
-          <div class="detail-top-bar">
-            <span v-if="detail.categoryName" class="detail-category-tag" @click="backToCategory(getTagName(detail.categoryName))">{{ getTagName(detail.categoryName) }}</span>
-            <span class="detail-date">📅 {{ formatDate(detail.createTime || detail.publishDate || detail.createdAt) }}</span>
-          </div>
-
-          <!-- 标题 -->
-          <h1 class="detail-title">{{ detail.title }}</h1>
-
-          <!-- 摘要横幅 -->
-          <div v-if="detail.summary" class="detail-summary">
-            <div class="summary-bar"></div>
-            <p>{{ detail.summary }}</p>
-          </div>
-
-          <!-- 元信息 -->
-          <div class="detail-meta-row">
-            <span class="meta-item">👤 {{ detail.author || '系统管理员' }}</span>
-            <span class="meta-item">💬 {{ detail.readCount || detail.viewCount || 0 }} 次阅读</span>
-          </div>
-
-          <!-- 正文 -->
-          <div class="detail-content-card">
-            <MarkdownRenderer v-if="detail.content" :content="detail.content" :is-ai-message="false" />
-            <div v-else class="no-content">暂无内容</div>
-          </div>
+        <!-- 分类标签 + 日期 -->
+        <div class="detail-top-bar">
+          <span v-if="detail.categoryName" class="detail-category-tag" @click="backToCategory(getTagName(detail.categoryName))">{{ getTagName(detail.categoryName) }}</span>
+          <span class="detail-date">📅 {{ formatDate(detail.createTime || detail.publishDate || detail.createdAt) }}</span>
         </div>
 
-        <!-- 右侧边栏 -->
-        <aside class="detail-sidebar">
-          <!-- 相关文章 -->
-          <div class="side-card">
-            <div class="side-card-title">相关文章</div>
-            <div class="side-article-list">
-              <div v-for="item in relatedArticles" :key="item.id" class="side-article-item" @click="openDetail(item)">
-                <div class="side-article-title">{{ item.title }}</div>
-                <div class="side-article-meta">
-                  <span>{{ formatDate(item.createTime || item.publishDate || item.createdAt) }}</span>
-                  <span>{{ item.readCount || item.viewCount || 0 }} 次阅读</span>
-                </div>
-              </div>
-              <div v-if="relatedArticles.length === 0" class="no-data">暂无相关文章</div>
-            </div>
-          </div>
+        <!-- 标题 -->
+        <h1 class="detail-title">{{ detail.title }}</h1>
 
-          <!-- 写作信息 -->
-          <div class="side-card">
-            <div class="side-card-title">写作信息</div>
-            <div class="info-list">
-              <div class="info-item"><span class="info-label">作者：</span><span>{{ detail.author || '系统管理员' }}</span></div>
-              <div class="info-item"><span class="info-label">发布时间：</span><span>{{ formatDate(detail.createTime || detail.publishDate || detail.createdAt) }}</span></div>
-              <div class="info-item"><span class="info-label">阅读量：</span><span>{{ detail.readCount || detail.viewCount || 0 }}</span></div>
-              <div class="info-item"><span class="info-label">分类：</span><span>{{ getTagName(detail.categoryName) }}</span></div>
-            </div>
+        <!-- 摘要横幅 -->
+        <div v-if="detail.summary" class="detail-summary">
+          <div class="summary-bar"></div>
+          <p>{{ detail.summary }}</p>
+        </div>
+
+        <!-- 元信息 -->
+        <div class="detail-meta-row">
+          <span class="meta-item">👤 {{ detail.author || '系统管理员' }}</span>
+          <span class="meta-item">💬 {{ detail.readCount || detail.viewCount || 0 }} 次阅读</span>
+        </div>
+
+        <!-- 正文 -->
+        <div class="detail-content-card">
+          <MarkdownRenderer v-if="detail.content" :content="detail.content" :is-ai-message="false" />
+          <div v-else class="no-content">暂无内容</div>
+        </div>
+
+        <!-- 相关标签 -->
+        <div v-if="detailTags.length > 0" class="detail-tags-section">
+          <h3 class="tags-title">相关标签</h3>
+          <div class="tags-row">
+            <span v-for="tag in detailTags" :key="tag" class="detail-tag">{{ tag }}</span>
           </div>
-        </aside>
+        </div>
       </div>
     </template>
   </div>
@@ -160,7 +136,7 @@ const categories = ref([])
 
 // 详情状态
 const detail = ref({})
-const relatedArticles = ref([])
+const detailTags = ref([])
 
 // 从数据中提取真正文章（过滤分类数据）
 const isArticle = (item) => item && typeof item.title === 'string' && item.title.length > 0 && item.sortOrder === undefined
@@ -219,7 +195,6 @@ const handlePageChange = (page) => { currentPage.value = page; fetchArticles() }
 
 // ===== 详情相关 =====
 const openDetail = async (article) => {
-  // 如果已有 content 直接用，否则请求详情
   if (article.content) {
     detail.value = { ...article }
   } else {
@@ -230,26 +205,18 @@ const openDetail = async (article) => {
       detail.value = { ...article }
     }
   }
+  // 提取标签（兼容多种字段名）
+  const tags = detail.value.tags || detail.value.relatedTags || detail.value.tagList || []
+  detailTags.value = typeof tags === 'string' ? tags.split(',').map(t => t.trim()).filter(Boolean) : tags
   viewMode.value = 'detail'
-  fetchRelated(article)
   window.scrollTo(0, 0)
-}
-
-const fetchRelated = async (article) => {
-  try {
-    // 用同一分类或默认参数获取相关文章（取前4篇）
-    const res = await articlePage({ sortField: 'readCount', sortDirection: 'desc', currentPage: '1', size: '4' })
-    let list = Array.isArray(res) ? res : (res?.records || res?.list || [])
-    list = list.filter(isArticle).filter(a => a.id !== article.id).slice(0, 4)
-    relatedArticles.value = list
-  } catch (e) { relatedArticles.value = [] }
 }
 
 // 返回列表（可按分类筛选）
 const backToCategory = (catName) => {
   viewMode.value = 'list'
   detail.value = {}
-  relatedArticles.value = []
+  detailTags.value = []
   // 尝试匹配分类
   const cat = categories.value.find(c => c.name === catName || c.categoryName === catName)
   if (cat) {
@@ -329,72 +296,145 @@ onMounted(() => {
 .empty-state { text-align: center; padding: 60px 0; color: #9ca3af; .empty-icon { font-size: 48px; margin-bottom: 12px; } p { font-size: 16px; } }
 .pagination-wrapper { margin-top: 24px; display: flex; justify-content: center; }
 
-// ===== 详情 - 两栏 =====
-.detail-body { margin: 0 auto; width: 1100px; padding: 24px 20px; display: flex; gap: 32px; align-items: flex-start; }
+// ===== 详情 - 单栏布局 =====
+.detail-body {
+  margin: 0 auto;
+  max-width: 800px;
+  padding: 32px 20px 60px;
+  background: #fff;
+}
 
-// 详情-左侧正文
-.detail-main { flex: 1; min-width: 0; }
+.detail-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
 
-.detail-top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
-  .detail-category-tag { display: inline-block; padding: 4px 14px; border-radius: 14px; font-size: 13px; color: #1e40af; background: #dbeafe; cursor: pointer; font-weight: 500; transition: 0.2s;
+  .detail-category-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    color: #1e40af;
+    background: #dbeafe;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+
     &:hover { background: #bfdbfe; }
   }
-  .detail-date { font-size: 14px; color: #6b7280; }
+
+  .detail-date {
+    font-size: 14px;
+    color: #6b7280;
+  }
 }
 
-.detail-title { font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 16px; line-height: 1.4; }
-
-.detail-summary { display: flex; gap: 12px; background: #f0fdf4; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px;
-  .summary-bar { width: 4px; flex-shrink: 0; background: #22c55e; border-radius: 2px; }
-  p { margin: 0; font-size: 15px; color: #374151; line-height: 1.6; }
+.detail-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px;
+  line-height: 1.4;
 }
 
-.detail-meta-row { display: flex; align-items: center; gap: 24px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f3f4f6;
-  .meta-item { font-size: 14px; color: #6b7280; }
+.detail-summary {
+  display: flex;
+  gap: 12px;
+  background: #f0fdf4;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+
+  .summary-bar {
+    width: 4px;
+    flex-shrink: 0;
+    background: #22c55e;
+    border-radius: 2px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 15px;
+    color: #374151;
+    line-height: 1.6;
+  }
 }
 
-.detail-content-card { background: white; border-radius: 12px; padding: 28px 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  :deep(h1) { font-size: 24px; margin: 24px 0 12px; }
-  :deep(h2) { font-size: 20px; margin: 20px 0 10px; }
-  :deep(h3) { font-size: 17px; margin: 16px 0 8px; }
-  :deep(p) { line-height: 1.8; margin: 0 0 12px; color: #374151; }
-  :deep(ul), :deep(ol) { padding-left: 24px; margin: 8px 0 16px; li { line-height: 1.8; margin-bottom: 4px; color: #374151; } }
-  :deep(blockquote) { border-left: 4px solid #e5e7eb; padding: 8px 16px; margin: 12px 0; background: #f9fafb; border-radius: 0 6px 6px 0; color: #6b7280; }
+.detail-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f3f4f6;
+
+  .meta-item {
+    font-size: 14px;
+    color: #6b7280;
+  }
+}
+
+.detail-content-card {
+  font-size: 15px;
+  color: #374151;
+  line-height: 1.8;
+
+  :deep(h1) { font-size: 24px; margin: 28px 0 14px; color: #111827; }
+  :deep(h2) { font-size: 20px; margin: 24px 0 12px; color: #1f2937; }
+  :deep(h3) { font-size: 17px; margin: 20px 0 10px; color: #1f2937; }
+  :deep(h4) { font-size: 15px; margin: 16px 0 8px; color: #374151; }
+  :deep(p) { line-height: 1.8; margin: 0 0 14px; color: #374151; }
+  :deep(ul), :deep(ol) { padding-left: 24px; margin: 8px 0 18px;
+    li { line-height: 1.8; margin-bottom: 6px; color: #374151; }
+  }
+  :deep(blockquote) { border-left: 4px solid #e5e7eb; padding: 10px 18px; margin: 14px 0; background: #f9fafb; border-radius: 0 6px 6px 0; color: #6b7280; }
   :deep(code) { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
   :deep(pre) { background: #1f2937; color: #e5e7eb; padding: 16px; border-radius: 8px; overflow-x: auto; code { background: none; padding: 0; } }
   :deep(img) { max-width: 100%; border-radius: 8px; }
-  .no-content { text-align: center; color: #9ca3af; padding: 40px 0; }
-}
-
-// 详情-右侧边栏
-.detail-sidebar { width: 300px; flex-shrink: 0; display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; }
-
-.side-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  .side-card-title { font-size: 17px; font-weight: 600; color: #374151; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid #f3f4f6; }
-}
-
-.side-article-list { display: flex; flex-direction: column; gap: 12px;
-  .side-article-item { cursor: pointer; padding: 8px; border-radius: 8px; transition: 0.2s;
-    &:hover { background: #f9fafb; }
-    .side-article-title { font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .side-article-meta { font-size: 12px; color: #9ca3af; display: flex; gap: 12px; }
+  :deep(table) { width: 100%; border-collapse: collapse; margin: 16px 0;
+    th, td { border: 1px solid #e5e7eb; padding: 10px 14px; text-align: left; }
+    th { background: #f9fafb; font-weight: 600; }
   }
-  .no-data { text-align: center; color: #9ca3af; font-size: 13px; padding: 16px 0; }
+
+  .no-content { text-align: center; color: #9ca3af; padding: 60px 0; font-size: 16px; }
 }
 
-.info-list { display: flex; flex-direction: column; gap: 10px;
-  .info-item { font-size: 14px; color: #6b7280;
-    .info-label { color: #9ca3af; }
+// 相关标签
+.detail-tags-section {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #f3f4f6;
+
+  .tags-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 12px;
+  }
+
+  .tags-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    .detail-tag {
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      color: #6b7280;
+      background: #f3f4f6;
+    }
   }
 }
 
 // ===== 响应式 =====
 @media (max-width: 1024px) {
   .header-section { padding: 28px 24px; }
-  .main-body, .detail-body { width: 100%; flex-direction: column; padding: 16px; }
-  .sidebar, .detail-sidebar { width: 100%; }
+  .main-body { width: 100%; flex-direction: column; padding: 16px; }
+  .sidebar { width: 100%; }
   .recommend-card { position: static; }
   .article-card { flex-direction: column; .card-thumbnail { width: 100%; height: 160px; } }
-  .detail-sidebar { position: static; }
+  .detail-body { padding: 24px 16px 40px; }
 }
 </style>
