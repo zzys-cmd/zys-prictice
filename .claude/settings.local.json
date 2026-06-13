@@ -27,7 +27,24 @@
       "Bash(curl -s -c /tmp/cookies.txt -X POST \"http://159.75.169.224:1235/api/user/login\" -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"123456\"}')",
       "Bash(curl -s -b /tmp/cookies.txt -X POST \"http://159.75.169.224:1235/api/emotion-diary\" -H \"Content-Type: application/json\" -d '{\"userId\":6026,\"diaryDate\":\"2026-05-07\",\"moodScore\":5,\"dominantEmotion\":\"平静\",\"emotionTriggers\":\"学习压力\",\"diaryContent\":\"今天感觉还不错\",\"sleepQuality\":3,\"stressLevel\":3}')",
       "Bash(curl -s -b /tmp/cookies.txt -X POST \"http://159.75.169.224:1235/api/emotion-diary\" -H \"Content-Type: application/json\" -d '{\"userId\":6026,\"moodScore\":5,\"diaryContent\":\"test\"}')",
-      "Bash(curl -s -X POST \"http://159.75.169.224:1235/api/emotion-diary\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlVHlwZSI6MiwiZXhwIjoxNzc4MzE2NjA5LCJpYXQiOjE3NzgyMzAyMDksImlzcyI6Im1lbnRhbC1oZWFsdGgtYXNzaXN0YW50In0.IQJoPswq8ZovQr46cvPCHBB_lNUfdttNopeQl45NvmQ\" -d '{\"userId\":6026,\"moodScore\":5,\"diaryContent\":\"test\"}')"
+      "Bash(curl -s -X POST \"http://159.75.169.224:1235/api/emotion-diary\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJyb2xlVHlwZSI6MiwiZXhwIjoxNzc4MzE2NjA5LCJpYXQiOjE3NzgyMzAyMDksImlzcyI6Im1lbnRhbC1oZWFsdGgtYXNzaXN0YW50In0.IQJoPswq8ZovQr46cvPCHBB_lNUfdttNopeQl45NvmQ\" -d '{\"userId\":6026,\"moodScore\":5,\"diaryContent\":\"test\"}')",
+      "Bash(curl -s \"http://159.75.169.224:1235/api/psychological-chat/sessions/14332/messages\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(curl -s -X POST \"http://159.75.169.224:1235/api/api/psychological-chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"sessionId\":\"14328\",\"userMessage\":\"你好\"}')",
+      "Bash(curl -s \"http://159.75.169.224:1235/api/psychological-chat/sessions?pageNum=1&pageSize=1\")",
+      "Bash(curl -s -N -X POST \"http://159.75.169.224:1235/api/api/psychological-chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"sessionId\":\"14328\",\"userMessage\":\"你好\"}' --max-time 10)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" -X POST \"http://159.75.169.224:1235/api/api/psychological-chat/stream\" -H \"Content-Type: application/json\" -H \"Accept: text/event-stream\" -d '{\"sessionId\":\"14328\",\"userMessage\":\"你好\"}' --max-time 5)",
+      "Bash(pip --version)",
+      "Bash(pip install *)",
+      "Bash(python \"C:\\\\Users\\\\17654\\\\Desktop\\\\深度学习期末作业\\\\app.py\")",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(Get-Content \"C:\\\\Users\\\\17654\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-17654-Desktop-hello-vue3\\\\33c49ce9-cb04-414f-ba3b-411525b7b537\\\\tasks\\\\by029hpcs.output\" -Tail 20)",
+      "Read(//c/Users/17654/Desktop/**)",
+      "Read(//c/Users/17654/Desktop/hello_vue3/src/截图//**)",
+      "Read(//c/Users/17654/Pictures/Screenshots//**)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\17654\\Desktop\\深度学习期末作业"
     ]
   }
 }

@@ -23,7 +23,7 @@
       </el-form>
       <div class="footer">
         <el-button class="btn" type="primary" size="large" @click="submitForm(ruleFormRef)">登录</el-button>
-        <p>还没有账户？<router-link to="/register">去注册</router-link></p>
+        <p>还没有账户？<router-link to="/auth/register">去注册</router-link></p>
       </div>
     </div>
   </div>

@@ -1,0 +1,2 @@
+- [consultation-api-fields](memory/consultation-api-fields.md) — 心理聊天API的真实请求参数和响应字段
+- [always-verify-api-first](memory/feedback-always-verify-api.md) — 对接接口必须先调用看真实返回，不许猜字段

@@ -2,11 +2,71 @@
   <div>
     <pagehead title="情绪日志" />
 
+    <!-- 详情弹窗 -->
+    <el-dialog v-model="detailDialogVisible" title="情绪日志详情" width="70%">
+      <div class="dialog-section">
+        <div class="section-title">用户信息</div>
+        <el-descriptions :column="4" border>
+          <el-descriptions-item label="用户名">{{ detailData.username }}</el-descriptions-item>
+          <el-descriptions-item label="昵称">{{ detailData.nickname }}</el-descriptions-item>
+          <el-descriptions-item label="用户ID">{{ detailData.userId }}</el-descriptions-item>
+          <el-descriptions-item label="记录日期">{{ detailData.diaryDate }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <div class="dialog-section">
+        <div class="section-title">情绪状态</div>
+        <el-descriptions :column="4" border>
+          <el-descriptions-item label="情绪评分" :span="2">
+            <span class="stars detail-stars">
+              <span v-for="n in 10" :key="n" :class="n <= detailData.moodScore ? 'star filled' : 'star'">★</span>
+            </span>
+          </el-descriptions-item>
+          <el-descriptions-item label="主要情绪">
+            <el-tag size="small" type="info">{{ detailData.dominantEmotion || '-' }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="压力水平">{{ detailData.stressLevel }}/5</el-descriptions-item>
+          <el-descriptions-item label="睡眠质量">{{ detailData.sleepQuality }}/5</el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <div class="dialog-section">
+        <div class="section-title">日记内容</div>
+        <el-descriptions :column="4" border>
+          <el-descriptions-item label="情绪触发因素" :span="4">{{ detailData.emotionTriggers || '无' }}</el-descriptions-item>
+          <el-descriptions-item label="日记内容" :span="4">
+            <div class="detail-text">{{ detailData.diaryContent || '-' }}</div>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+
+      <div class="dialog-section">
+        <div class="section-title">AI情绪分析结果</div>
+        <el-descriptions :column="4" border>
+          <el-descriptions-item label="主要情绪">{{ detailData.aiMainEmotion || '中性' }}</el-descriptions-item>
+          <el-descriptions-item label="情绪强度">
+            <el-progress :percentage="detailData.emotionStrength || 0" status="active" />
+          </el-descriptions-item>
+          <el-descriptions-item label="风险等级">{{ detailData.riskLevel || 0 }}</el-descriptions-item>
+          <el-descriptions-item label="情绪性质">
+            <el-tag
+              :type="detailData.emotionType === '正面情绪' ? 'success' : detailData.emotionType === '负面情绪' ? 'danger' : 'info'"
+              size="small">
+              {{ detailData.emotionType || '-' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="专业建议" :span="4">{{ detailData.professionalAdvice || '暂无建议'
+            }}</el-descriptions-item>
+          <el-descriptions-item label="风险提示" :span="4">{{ detailData.riskTips || '无风险' }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </el-dialog>
+
     <el-form ref="formRef" :model="formData">
       <el-row :gutter="24">
         <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
-          <el-form-item label="用户ID" prop="userId">
-            <el-input v-model="formData.userId" placeholder="请输入用户ID" clearable />
+          <el-form-item label="ID" prop="id">
+            <el-input v-model="formData.id" placeholder="请输入日记ID" clearable />
           </el-form-item>
         </el-col>
         <el-col :xs="24" :sm="12" :md="8" :lg="6" :xl="6">
@@ -21,12 +81,12 @@
         </el-col>
       </el-row>
       <el-row>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
+        <el-button type="primary" @click="handleSearch" :loading="loading">搜索</el-button>
         <el-button @click="handleReset">重置</el-button>
       </el-row>
     </el-form>
 
-    <el-table :data="tableData" style="width: 100%; margin-top: 20px">
+    <el-table :data="tableData" style="width: 100%; margin-top: 20px" v-loading="loading">
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column label="会话ID" width="200">
         <template #default="{ row }">
@@ -70,12 +130,13 @@
 
 <script setup>
 import pagehead from '@/components/pagehead.vue'
-import { getEmotionDiaryPage } from '@/api/admin.js'
+import { getEmotionDiaryPage, deleteEmotionDiary } from '@/api/admin.js'
 import { onMounted, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const formRef = ref(null)
 const formData = reactive({
-  userId: '',
+  id: '',
   scoreRange: '',
 })
 
@@ -83,6 +144,27 @@ const tableData = ref([])
 const currentPage = ref(1)
 const pageSize = ref(10)
 const total = ref(0)
+
+// 详情弹窗相关
+const detailDialogVisible = ref(false)
+const detailData = reactive({
+  userId: '',
+  username: '',
+  nickname: '',
+  diaryDate: '',
+  moodScore: 0,
+  sleepQuality: 0,
+  stressLevel: 0,
+  dominantEmotion: '',
+  emotionTriggers: '',
+  diaryContent: '',
+  aiMainEmotion: '',
+  emotionStrength: 0,
+  riskLevel: 0,
+  emotionType: '',
+  professionalAdvice: '',
+  riskTips: '',
+})
 
 const scoreRangeMap = {
   '': { min: undefined, max: undefined },
@@ -92,18 +174,30 @@ const scoreRangeMap = {
 }
 
 const fetchData = () => {
+  loading.value = true
   const range = scoreRangeMap[formData.scoreRange] ?? scoreRangeMap['']
+  const searchId = formData.id || undefined
+
   getEmotionDiaryPage({
     current: currentPage.value,
     size: pageSize.value,
-    userId: formData.userId || undefined,
+    id: searchId,
     minMoodScore: range.min,
     maxMoodScore: range.max,
   }).then(res => {
-    tableData.value = res.records ?? []
-    total.value = res.total ?? 0
+    let records = res.records ?? []
+    // 后端暂不支持id筛选，前端做过滤
+    if (searchId) {
+      records = records.filter(r => String(r.id) === String(searchId))
+    }
+    tableData.value = records
+    total.value = searchId ? records.length : (res.total ?? 0)
+  }).finally(() => {
+    loading.value = false
   })
 }
+
+const loading = ref(false)
 
 const handleSearch = () => {
   currentPage.value = 1
@@ -111,6 +205,8 @@ const handleSearch = () => {
 }
 
 const handleReset = () => {
+  formData.id = ''
+  formData.scoreRange = ''
   formRef.value?.resetFields()
   handleSearch()
 }
@@ -127,11 +223,39 @@ const onSizeChange = (size) => {
 }
 
 const handleDetail = (row) => {
-  // TODO: 待实现
+  // 将行数据映射到详情数据对象
+  Object.assign(detailData, {
+    userId: row.userId,
+    username: row.username,
+    nickname: row.nickname,
+    diaryDate: row.diaryDate,
+    moodScore: row.moodScore || 0,
+    sleepQuality: row.sleepQuality || 0,
+    stressLevel: row.stressLevel || 0,
+    dominantEmotion: row.dominantEmotion || '-',
+    emotionTriggers: row.emotionTriggers || '无',
+    diaryContent: row.diaryContent || '-',
+    aiMainEmotion: row.aiMainEmotion || '中性',
+    emotionStrength: row.emotionStrength || 0,
+    riskLevel: row.riskLevel || 0,
+    emotionType: row.emotionType || '中性',
+    professionalAdvice: row.professionalAdvice || '暂无建议',
+    riskTips: row.riskTips || '无风险',
+  })
+  detailDialogVisible.value = true
 }
 
 const handleDelete = (row) => {
-  // TODO: 待实现
+  ElMessageBox.confirm(`确定要删除用户"${row.username || row.userId}"的日记记录吗？`, '确认删除', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
+    deleteEmotionDiary(row.id).then(() => {
+      ElMessage.success('删除成功')
+      fetchData()
+    })
+  }).catch(() => {})
 }
 
 onMounted(() => {
@@ -144,9 +268,15 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.detail-stars {
+  display: inline-flex;
+  align-items: center;
+}
+
 .star {
   color: #c0c4cc;
   font-size: 16px;
+  margin-right: 2px;
 }
 
 .star.filled {
@@ -155,5 +285,25 @@ onMounted(() => {
 
 .life-indicators {
   font-size: 13px;
+}
+
+.dialog-section {
+  margin-bottom: 18px;
+}
+
+.section-title {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.detail-text {
+  max-height: 140px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #606266;
+  line-height: 1.7;
 }
 </style>

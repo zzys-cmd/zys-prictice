@@ -34,6 +34,14 @@ export function deleteArticle(id) {
   return request.delete(`/knowledge/article/${id}`);
 }
 
+export function startSession(data) {
+  return request.post("/psychological-chat/session/start", data);
+}
+
+export function deleteSession(sessionId) {
+  return request.delete(`/psychological-chat/sessions/${sessionId}`);
+}
+
 export function getConsultationList(params) {
   return request.get("/psychological-chat/sessions", { params });
 }
@@ -44,4 +52,24 @@ export function getSessionMessages(sessionId) {
 
 export function getEmotionDiaryPage(params) {
   return request.get("/emotion-diary/admin/page", { params });
+}
+
+export function saveEmotionDiary(data) {
+  return request.post("/emotion-diary", data);
+}
+
+export function deleteEmotionDiary(id) {
+  return request.delete(`/emotion-diary/admin/${id}`);
+}
+
+export function getSessionEmotion(sessionId) {
+  return request.get(`/psychological-chat/session/${sessionId}/emotion`);
+}
+
+export function getDataAnalyticsOverview() {
+  return request.get("/data-analytics/overview");
+}
+
+export function register(data) {
+  return request.post("/user/add", data);
 }

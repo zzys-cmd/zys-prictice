@@ -7,7 +7,7 @@
             <Expand />
           </el-icon>
         </el-button>
-        <p class="page-title">导航栏</p>
+        <p class="page-title">{{ route.meta.title }}</p>
       </div>
       <div class="flex-center">
         <el-dropdown @command="handleCommand">
@@ -38,9 +38,23 @@
 
 <script setup>
 import { ArrowDown } from '@element-plus/icons-vue'
+import { ElMessageBox } from 'element-plus'
 import { useAdminStore } from '../stores/admin'
+import { useRoute, useRouter } from 'vue-router'
+const route = useRoute()
+const router = useRouter()
 const handleCommand = (command) => {
-  console.log(command)
+  if (command === 'logout') {
+    ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
+      router.push('/auth/login')
+    }).catch(() => {})
+  }
 }
 
 const handleCollapse = () => {
